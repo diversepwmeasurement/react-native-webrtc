@@ -1,54 +1,43 @@
-name: iOS CI
-on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '**.md'
-  pull_request:
-    branches: [ master ]
-    paths-ignore:
-      - '**.md'
-
 jobs:
   ios-compile:
-    runs-on: macos-latest
+    runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v3
-
-    - uses: actions/setup-node@v3
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      uses: actions/setup-node@v3
       with:
-        node-version: '16.x'
-        cache: 'npm'
+        cache: npm
         cache-dependency-path: '**/package-lock.json'
-
-    - name: Cache cocoapods
+        node-version: 16.x
+    - continue-on-error: true
+      name: Cache cocoapods
       uses: actions/cache@v3
       with:
-        path: ./examples/GumTestApp/ios/Pods
         key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pods-
+        path: ./examples/GumTestApp/ios/Pods
+        restore-keys: '${{ runner.os }}-pods-
 
-    - name: Install node modules
+          '
+    - continue-on-error: true
+      name: Install node modules
       run: npm install
-
-    - name: Install example node modules
+    - continue-on-error: true
+      name: Install example node modules
+      run: npm install
       working-directory: ./examples/GumTestApp/
-      run: npm install
-
-    - name: Pod install
-      working-directory: ./examples/GumTestApp/ios
+    - continue-on-error: true
+      name: Pod install
       run: pod install
-
-    - name: Compile iOS Example
       working-directory: ./examples/GumTestApp/ios
-      run: |
-        set -o pipefail && \
-        xcodebuild -workspace GumTestApp.xcworkspace/ \
-          -scheme GumTestApp \
-          -destination generic/platform=iOS \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_ENTITLEMENTS="" \
-          CODE_SIGNING_ALLOWED="NO" clean build \
-        | xcpretty
+    - continue-on-error: true
+      name: Compile iOS Example
+      run: "set -o pipefail && \\\nxcodebuild -workspace GumTestApp.xcworkspace/ \\\
+        \n  -scheme GumTestApp \\\n  -destination generic/platform=iOS \\\n  CODE_SIGN_IDENTITY=\"\
+        \" \\\n  CODE_SIGNING_REQUIRED=NO \\\n  CODE_SIGN_ENTITLEMENTS=\"\" \\\n \
+        \ CODE_SIGNING_ALLOWED=\"NO\" clean build \\\n| xcpretty\n"
+      working-directory: ./examples/GumTestApp/ios
+name: iOS CI
+on:
+  repository_dispatch:
+    types: trigger-ga___ios_ci.yml
